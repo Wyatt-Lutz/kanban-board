@@ -9,9 +9,10 @@ type ColumnProps = {
     title: string;
     tasks: Task[];
     onTaskCreated: (task: Task) => void;
+    onTaskDeleted: (taskId: string) => void;
 };
 
-const Column = ({ status, title, tasks, onTaskCreated }: ColumnProps) => {
+const Column = ({ status, title, tasks, onTaskCreated, onTaskDeleted }: ColumnProps) => {
     const { setNodeRef, isOver } = useDroppable({
         id: status,
     });
@@ -20,14 +21,14 @@ const Column = ({ status, title, tasks, onTaskCreated }: ColumnProps) => {
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-25 flex flex-col gap-2 p-2 rounded-md ${isOver ? 'bg-gray-100' : ''}`}
+            className={`min-h-96 flex flex-col gap-2 p-4 rounded-md w-80 ${isOver ? 'bg-gray-100' : ''}`}
         >
-            {tasks.length === 0 && <div className="text-xs text-gray-400 text-center py-4"></div>}
+            {tasks.length === 0 && <div className="text-xs text-gray-400 text-center py-8"></div>}
             <div>{title}</div>
             <div>{tasks.length}</div>
-            <div>
+            <div className="flex flex-col gap-3">
                 {tasks.map((task) => (
-                    <TaskItem key={task.id} task={task} />
+                    <TaskItem key={task.id} task={task} onDelete={() => onTaskDeleted(task.id)} />
                 ))}
             </div>
             {isAddingTask ? (
@@ -40,7 +41,12 @@ const Column = ({ status, title, tasks, onTaskCreated }: ColumnProps) => {
                     onCancel={() => setIsAddingTask(false)}
                 />
             ) : (
-                <button onClick={() => setIsAddingTask(true)}> Add task </button>
+                <button
+                    className="border rounded-lg py-2 border-dashed"
+                    onClick={() => setIsAddingTask(true)}
+                >
+                    + Add task
+                </button>
             )}
         </div>
     );
