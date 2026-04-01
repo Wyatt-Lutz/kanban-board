@@ -1,3 +1,5 @@
+import AppLayout from "./components/layout/AppLayout"
+import TopBar from "./components/layout/Topbar"
 import { supabase } from "./lib/supabase"
 import { useEffect } from "react"
 
@@ -15,7 +17,9 @@ function App() {
         signInGuestUser()
     }, [])
   return (
-    <div>Hello</div>
+    <AppLayout topBar={<TopBar boardTitle="Test" totalTasks={142} doneTasks={2} overdueTasks={4}/>}>
+        <div>Hi</div>
+    </AppLayout>
   )
 }
 
