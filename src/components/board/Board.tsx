@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Task } from '../../types/task';
-import { createTask } from '../../createTasks';
 import Column from './Column';
 
 const COLUMNS: { title: string; status: Task['status'] }[] = [

@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { createTask } from '../../createTasks';
 import type { Task } from '../../types/task';
 import TaskItem from '../task/TaskItem';
+import NewTaskItem from '../task/NewTaskItem';
 
 type ColumnProps = {
     status: string;
@@ -13,17 +13,6 @@ type ColumnProps = {
 const Column = ({ status, title, tasks, onTaskCreated }: ColumnProps) => {
     console.log(tasks);
     const [isAddingTask, setIsAddingTask] = useState(false);
-    const [newTaskTitle, setNewTaskTitle] = useState('');
-
-    const handleAdd = async () => {
-        if (!newTaskTitle.trim()) return;
-        const newTask = await createTask(status, newTaskTitle);
-        if (newTask) {
-            onTaskCreated(newTask);
-        }
-        setNewTaskTitle('');
-        setIsAddingTask(false);
-    };
 
     return (
         <div>
@@ -35,22 +24,16 @@ const Column = ({ status, title, tasks, onTaskCreated }: ColumnProps) => {
                 ))}
             </div>
             {isAddingTask ? (
-                <div>
-                    <input
-                        autoFocus
-                        value={newTaskTitle}
-                        onChange={(e) => setNewTaskTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleAdd();
-                            if (e.key === 'Escape') setIsAddingTask(false);
-                        }}
-                        placeholder="Task title..."
-                    />
-                    <button onClick={handleAdd}>Add</button>
-                    <button onClick={() => setIsAddingTask(false)}>Cancel</button>
-                </div>
+                <NewTaskItem
+                    status={status}
+                    onTaskCreated={(task) => {
+                        onTaskCreated(task);
+                        setIsAddingTask(false);
+                    }}
+                    onCancel={() => setIsAddingTask(false)}
+                />
             ) : (
-                <button onClick={() => setIsAddingTask(true)}>Add Task</button>
+                <button onClick={() => setIsAddingTask(true)}> Add task </button>
             )}
         </div>
     );
