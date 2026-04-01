@@ -22,9 +22,7 @@ const TopBar = ({ boardTitle, totalTasks, doneTasks, overdueTasks }: TopBarProps
                 </div>
             </div>
         </div>
-
-
-    )
-}
+    );
+};
 
 export default TopBar;

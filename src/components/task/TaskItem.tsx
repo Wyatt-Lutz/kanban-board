@@ -1,9 +1,8 @@
-import type { Task } from "../../types/task";
+import type { Task } from '../../types/task';
 
 type TaskProps = {
     task: Task;
-
-}
+};
 
 const TaskItem = ({ task }: TaskProps) => {
     return (
@@ -11,5 +10,5 @@ const TaskItem = ({ task }: TaskProps) => {
             <div>{task.title}</div>
         </div>
     );
-}
+};
 export default TaskItem;
