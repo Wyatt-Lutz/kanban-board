@@ -12,9 +12,9 @@ const Column = ({ title, tasks }: ColumnProps) => {
             <div>{title}</div>
             <div>{tasks.length}</div>
             <div>
-                {tasks.map((task) => {
-                    <TaskItem key={task.id} task={task} />;
-                })}
+                {tasks.map((task) => (
+                    <TaskItem key={task.id} task={task} />
+                ))}
             </div>
         </div>
     );

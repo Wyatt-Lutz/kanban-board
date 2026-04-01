@@ -2,6 +2,14 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Task } from '../../types/task';
 import { createTask } from '../../createTasks';
+import Column from './Column';
+
+const COLUMNS: { title: string; status: Task['status'] }[] = [
+    { title: 'To Do', status: 'todo' },
+    { title: 'In Progress', status: 'in_progress' },
+    { title: 'In Review', status: 'in_review' },
+    { title: 'Done', status: 'done' },
+];
 
 const Board = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -26,7 +34,17 @@ const Board = () => {
         };
         fetchTasks();
     }, []);
-    return <div>Hi</div>;
+    return (
+        <div>
+            {COLUMNS.map((column) => (
+                <Column
+                    key={column.status}
+                    title={column.title}
+                    tasks={tasks.filter((task) => task.status === column.status)}
+                />
+            ))}
+        </div>
+    );
 };
 
 export default Board;
