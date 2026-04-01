@@ -14,6 +14,10 @@ const COLUMNS: { title: string; status: Task['status'] }[] = [
 const Board = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
 
+    const onTaskCreated = (newTask: Task) => {
+        setTasks((prev) => [...prev, newTask]);
+    };
+
     useEffect(() => {
         const fetchTasks = async () => {
             const {
@@ -35,12 +39,13 @@ const Board = () => {
         fetchTasks();
     }, []);
     return (
-        <div>
+        <div className="flex gap-4 p-5 overflow-x-auto flex-1">
             {COLUMNS.map((column) => (
                 <Column
-                    key={column.status}
+                    status={column.status}
                     title={column.title}
                     tasks={tasks.filter((task) => task.status === column.status)}
+                    onTaskCreated={onTaskCreated}
                 />
             ))}
         </div>
