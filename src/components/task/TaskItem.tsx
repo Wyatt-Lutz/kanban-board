@@ -3,6 +3,7 @@ import { useState } from 'react';
 import type { Task } from '../../types/task';
 import TrashIcon from '../../assets/trash';
 import { parseDateOnly, isDateOverdue } from '../../lib/dateHelpers';
+import Date from '../../assets/date';
 
 type TaskProps = {
     task: Task;
@@ -10,10 +11,16 @@ type TaskProps = {
     onEdit?: (updates: Partial<Pick<Task, 'title' | 'priority' | 'due_date'>>) => void;
 };
 
-const priorityClasses = {
-    low: 'bg-emerald-100 text-emerald-800',
-    normal: 'bg-amber-100 text-amber-800',
-    high: 'bg-red-100 text-red-800',
+const PRIORITY_STYLES = {
+    low: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/30',
+    normal: 'bg-amber-400/10 text-amber-400 border-amber-400/30',
+    high: 'bg-red-400/10 text-red-400 border-red-400/30',
+};
+
+const PRIORITY_BAR = {
+    low: 'border-l-emerald-400',
+    normal: 'border-l-amber-400',
+    high: 'border-l-red-400',
 };
 
 const formatTaskDate = (dateString?: string) => {
@@ -39,7 +46,9 @@ const TaskItem = ({ task, onDelete, onEdit }: TaskProps) => {
     const commitTitle = (value: string) => {
         setIsEditingTitle(false);
         setTitleInput(value);
-        if (value.trim().length > 0) onEdit?.({ title: value.trim() });
+        if (value.trim().length > 0) {
+            onEdit?.({ title: value.trim() });
+        }
     };
 
     const commitPriority = (value: Task['priority']) => {
@@ -64,62 +73,25 @@ const TaskItem = ({ task, onDelete, onEdit }: TaskProps) => {
                     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
                     : undefined
             }
-            className="relative bg-white border rounded-xl p-6 shadow-sm hover:shadow-md cursor-grab"
+            className={`group relative rounded-xl px-3.5 py-3 border border-white/10 bg-white/[0.035] cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg ${PRIORITY_BAR[priorityInput]} border-l-2`}
         >
             <button
+                onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onDelete();
                 }}
-                onMouseDown={(e) => e.stopPropagation()}
-                className="absolute top-3 right-3 p-1.5 rounded-md text-red-500 hover:bg-red-50 z-20 cursor-pointer"
+                className="absolute top-2 right-2 z-20 p-1 rounded-md opacity-0 group-hover:opacity-100 text-red-400/70 hover:bg-red-400/10 hover:text-red-400 transition-opacity"
             >
                 <TrashIcon />
             </button>
 
-            {task.due_date && !isEditingDueDate && (
-                <button
-                    onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setIsEditingDueDate(true);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    className={`absolute bottom-3 right-3 text-sm px-3 py-1 rounded-md border ${isOverdue ? 'text-red-600 font-semibold border-red-200 bg-red-50' : 'text-gray-600 border-gray-300 bg-gray-50'} hover:bg-gray-100 transition-colors cursor-pointer`}
-                >
-                    {isOverdue ? 'Overdue' : formatTaskDate(task.due_date)}
-                </button>
-            )}
-
-            {isEditingDueDate && (
-                <input
-                    type="date"
-                    value={dueDateInput}
-                    onChange={(e) => setDueDateInput(e.target.value)}
-                    onBlur={(e) => commitDueDate(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            commitDueDate(dueDateInput);
-                        }
-                        if (e.key === 'Escape') {
-                            setIsEditingDueDate(false);
-                        }
-                    }}
-                    className="absolute bottom-3 right-3 text-sm px-3 py-1 rounded-md border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-300 z-20"
-                />
-            )}
-
-            {task.priority && !isDone && (
-                <div
-                    className={`absolute top-1 left-0 w-1 h-[calc(100%-8px)] rounded-l-xl ${priorityClasses[priorityInput]}`}
-                />
-            )}
-
-            <div className="pr-8">
+            <div className="pr-6 mb-6">
                 {isEditingTitle ? (
                     <input
-                        type="text"
+                        autoFocus
+                        onPointerDown={(e) => e.stopPropagation()}
                         value={titleInput}
                         onChange={(e) => setTitleInput(e.target.value)}
                         onBlur={(e) => commitTitle(e.target.value)}
@@ -127,52 +99,84 @@ const TaskItem = ({ task, onDelete, onEdit }: TaskProps) => {
                             if (e.key === 'Enter') commitTitle(titleInput);
                             if (e.key === 'Escape') setIsEditingTitle(false);
                         }}
-                        className="w-full text-lg font-semibold mb-3 border rounded px-2 py-1"
-                        autoFocus
+                        className="w-full px-2 py-1 text-[13px] font-medium text-white bg-white/10 border border-indigo-500/40 rounded-md outline-none relative z-20"
                     />
                 ) : (
                     <p
-                        onMouseDown={(e) => e.stopPropagation()}
                         onDoubleClick={(e) => {
                             e.stopPropagation();
                             setIsEditingTitle(true);
                         }}
-                        className={`text-lg font-semibold mb-3 ${isDone ? 'line-through text-gray-500' : 'text-gray-900'} cursor-text`}
+                        className={`text-[16px] font-medium leading-snug cursor-text ${isDone ? 'text-white/30 line-through' : 'text-white/90'}`}
                     >
                         {titleInput}
                     </p>
                 )}
 
-                <div className="flex items-center justify-between gap-2">
-                    {isEditingPriority ? (
+                <p
+                    className={`text-sm wrap-break-word whitespace-pre-wrap text-gray-400 mb-3  ${isDone ? 'line-through' : ''}`}
+                >
+                    {task.description}
+                </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 mt-1">
+                {!isDone &&
+                    (isEditingPriority ? (
                         <select
+                            autoFocus
+                            onPointerDown={(e) => e.stopPropagation()}
                             value={priorityInput}
                             onChange={(e) => setPriorityInput(e.target.value as Task['priority'])}
                             onBlur={(e) => commitPriority(e.target.value as Task['priority'])}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Escape') setIsEditingPriority(false);
-                            }}
-                            className="text-xs font-medium px-2 py-1 rounded-full border"
-                            autoFocus
+                            className="relative z-20 text-[11px] px-2 py-0.5 rounded-full bg-slate-800 border border-white/20 text-white outline-none"
                         >
-                            <option value="high">high</option>
-                            <option value="normal">normal</option>
-                            <option value="low">low</option>
+                            <option value="high">High</option>
+                            <option value="normal">Normal</option>
+                            <option value="low">Low</option>
                         </select>
                     ) : (
                         <span
+                            onPointerDown={(e) => e.stopPropagation()}
                             onClick={(e) => {
+                                e.preventDefault();
                                 e.stopPropagation();
                                 setIsEditingPriority(true);
                             }}
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${isDone ? 'bg-gray-100 text-gray-500' : priorityClasses[priorityInput]} cursor-pointer`}
+                            className={`relative z-20 text-[11px] font-medium capitalize px-2 py-0.5 rounded-full border ${PRIORITY_STYLES[priorityInput]} cursor-pointer hover:opacity-80`}
                         >
                             {priorityInput}
                         </span>
-                    )}
+                    ))}
 
-                    <div className="flex-1" />
-                </div>
+                <div className="flex-1" />
+
+                {task.due_date && !isEditingDueDate && (
+                    <div
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setIsEditingDueDate(true);
+                        }}
+                        className={`relative z-20 flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-md border cursor-pointer ${isOverdue ? 'bg-red-400/10 border-red-400/30 text-red-400 font-semibold' : 'bg-white/5 border-white/10 text-white/40'}`}
+                    >
+                        <Date />
+                        {isOverdue ? 'Overdue' : formatTaskDate(task.due_date)}
+                    </div>
+                )}
+
+                {isEditingDueDate && (
+                    <input
+                        type="date"
+                        autoFocus
+                        onPointerDown={(e) => e.stopPropagation()}
+                        value={dueDateInput}
+                        onChange={(e) => setDueDateInput(e.target.value)}
+                        onBlur={(e) => commitDueDate(e.target.value)}
+                        className="relative z-20 text-[11px] px-2 py-0.5 rounded-md bg-slate-800 border border-indigo-500/40 text-white outline-none"
+                    />
+                )}
             </div>
         </div>
     );

@@ -20,9 +20,11 @@ function App() {
         return null;
     }
     return (
-        <AppLayout>
-            <Board />
-        </AppLayout>
+        <div className="min-h-screen bg-black text-white">
+            <AppLayout>
+                <Board />
+            </AppLayout>
+        </div>
     );
 }
 

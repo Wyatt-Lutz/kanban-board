@@ -113,7 +113,7 @@ const Board = () => {
                 onSearchChange={setSearchQuery}
             />
             <DndContext onDragEnd={handleDragEnd}>
-                <div className="flex gap-6 p-6 overflow-x-auto">
+                <div className="flex gap-6 p-6 overflow-x-auto bg-gray-950 min-h-screen">
                     {COLUMNS.map((column) => (
                         <Column
                             key={column.status}

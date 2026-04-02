@@ -16,6 +16,13 @@ type ColumnProps = {
     ) => void;
 };
 
+const LABEL_COLORS: Record<string, string> = {
+    todo: 'text-slate-400',
+    in_progress: 'text-amber-400',
+    in_review: 'text-violet-400',
+    done: 'text-emerald-400',
+};
+
 const Column = ({
     status,
     title,
@@ -24,7 +31,7 @@ const Column = ({
     onTaskDeleted,
     onTaskUpdated,
 }: ColumnProps) => {
-    const { setNodeRef, isOver } = useDroppable({
+    const { setNodeRef } = useDroppable({
         id: status,
     });
     const [isAddingTask, setIsAddingTask] = useState(false);
@@ -36,16 +43,27 @@ const Column = ({
         return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
     });
     return (
-        <div
-            ref={setNodeRef}
-            className={`flex flex-col p-4 rounded-md w-80 ${isOver ? 'bg-gray-100' : ''}`}
-        >
-            <div className="flex pb-1 justify-between">
-                <div className="text-lg font-semibold">{title}</div>
-                <div className="text-xs text-gray-500">{tasks.length} tasks</div>
+        <div ref={setNodeRef} className="flex flex-col w-85 shrink-0 rounded-xl">
+            <div className="px-4 pt-3.5 pb-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                        <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${LABEL_COLORS[status] || 'bg-gray-400'}`}
+                        />
+                        <span
+                            className={`text-[12px] font-semibold tracking-wider uppercase ${LABEL_COLORS[status] || 'text-gray-400'}`}
+                        >
+                            {title}
+                        </span>
+                    </div>
+
+                    <span className="text-[11px] font-semibold text-white/30 bg-white/10 rounded-full px-2 py-0.5 tabular-nums">
+                        {tasks.length}
+                    </span>
+                </div>
             </div>
 
-            <div className="flex flex-col gap-3 mt-2">
+            <div className="flex flex-col gap-1.5 p-2.5 grow min-h-15">
                 {sortedTasks.map((task) => (
                     <TaskItem
                         key={task.id}
@@ -54,25 +72,25 @@ const Column = ({
                         onEdit={(updates) => onTaskUpdated(task.id, updates)}
                     />
                 ))}
-            </div>
 
-            {isAddingTask ? (
-                <NewTaskItem
-                    status={status}
-                    onTaskCreated={(task) => {
-                        onTaskCreated(task);
-                        setIsAddingTask(false);
-                    }}
-                    onCancel={() => setIsAddingTask(false)}
-                />
-            ) : (
-                <button
-                    className="border rounded-lg py-2 px-4 border-dashed hover:bg-gray-50 transition-colors w-full mt-3"
-                    onClick={() => setIsAddingTask(true)}
-                >
-                    + Add task
-                </button>
-            )}
+                {isAddingTask ? (
+                    <NewTaskItem
+                        status={status}
+                        onTaskCreated={(task) => {
+                            onTaskCreated(task);
+                            setIsAddingTask(false);
+                        }}
+                        onCancel={() => setIsAddingTask(false)}
+                    />
+                ) : (
+                    <button
+                        onClick={() => setIsAddingTask(true)}
+                        className={`w-full px-3 py-2 text-left text-[12px] font-medium flex items-center gap-1.5 rounded-lg border border-dashed border-white/20 text-white/50 transition-all hover:border-white/30 hover:text-white/70 hover:bg-white/5 ${sortedTasks.length > 0 ? 'mt-1' : ''}`}
+                    >
+                        + Add task
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
