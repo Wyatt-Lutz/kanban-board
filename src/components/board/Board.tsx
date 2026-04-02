@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { fetchTasks, updateTask, deleteTask } from '../../lib/taskService';
 import type { Task } from '../../types/task';
 import Column from './Column';
 import TopBar from '../layout/Topbar';
@@ -14,46 +15,49 @@ const COLUMNS: { title: string; status: Task['status'] }[] = [
 
 const Board = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const onTaskCreated = (newTask: Task) => {
         setTasks((prev) => [...prev, newTask]);
     };
 
     const onTaskDeleted = async (taskId: string) => {
-        console.log('clicked');
         const taskToDelete = tasks.find((t) => t.id === taskId);
         if (!taskToDelete) return;
 
         setTasks((prev) => prev.filter((task) => task.id !== taskId));
 
-        const { error } = await supabase.from('tasks').delete().eq('id', taskId);
-
-        if (error) {
+        try {
+            await deleteTask(taskId);
+        } catch (error) {
             console.error('Error deleting task:', error);
             setTasks((prev) => [...prev, taskToDelete]);
         }
     };
 
-    const onEditDueDate = async (taskId: string, dueDate: string) => {
-        const previousDate = tasks.find((task) => task.id === taskId)?.due_date;
+    const onTaskUpdated = async (
+        taskId: string,
+        updates: Partial<Pick<Task, 'title' | 'priority' | 'due_date' | 'status'>>,
+    ) => {
+        const previousTask = tasks.find((task) => task.id === taskId);
+        if (!previousTask) return;
 
         setTasks((prev) =>
-            prev.map((task) => (task.id === taskId ? { ...task, due_date: dueDate } : task)),
+            prev.map((task) =>
+                task.id === taskId
+                    ? {
+                          ...task,
+                          ...updates,
+                      }
+                    : task,
+            ),
         );
 
-        const { error } = await supabase
-            .from('tasks')
-            .update({ due_date: dueDate })
-            .eq('id', taskId);
-
-        if (error) {
-            console.error('Error updating due date:', error);
-
-            setTasks((prev) =>
-                prev.map((task) =>
-                    task.id === taskId ? { ...task, due_date: previousDate } : task,
-                ),
-            );
+        try {
+            await updateTask(taskId, updates);
+        } catch (error) {
+            console.error('Error updating task:', error);
+            setTasks((prev) => prev.map((task) => (task.id === taskId ? previousTask : task)));
         }
     };
 
@@ -65,46 +69,49 @@ const Board = () => {
         const taskId = active.id as string;
         const newStatus = over.id as Task['status'];
 
+        const previousTask = tasks.find((task) => task.id === taskId);
         setTasks((prev) =>
             prev.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)),
         );
 
-        const { error } = await supabase
-            .from('tasks')
-            .update({ status: newStatus })
-            .eq('id', taskId);
-
-        if (error) {
+        try {
+            await updateTask(taskId, { status: newStatus });
+        } catch (error) {
             console.error('Error updating task:', error);
-
-            setTasks((prev) =>
-                prev.map((task) => (task.id === taskId ? { ...task, status: task.status } : task)),
-            );
+            if (previousTask) {
+                setTasks((prev) => prev.map((task) => (task.id === taskId ? previousTask : task)));
+            }
         }
     };
     useEffect(() => {
-        const fetchTasks = async () => {
+        const fetchTasksForUser = async () => {
             const {
                 data: { user },
             } = await supabase.auth.getUser();
-            console.log(user);
-            if (!user) {
-                return;
-            }
-            //await createTask();
+            if (!user) return;
 
-            const { data, error } = await supabase.from('tasks').select('*').eq('user_id', user.id);
-            if (error) {
-                console.error(error);
-            } else {
-                setTasks(data || []);
+            try {
+                const initializedTasks = await fetchTasks(user.id);
+                setTasks(initializedTasks);
+            } catch (error) {
+                console.error('Error loading tasks:', error);
             }
         };
-        fetchTasks();
+        fetchTasksForUser();
     }, []);
+
+    const filteredTasks = tasks.filter((task) =>
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+
     return (
         <>
-            <TopBar boardTitle="Kanban Board" tasks={tasks} />
+            <TopBar
+                boardTitle="Kanban Board"
+                tasks={filteredTasks}
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+            />
             <DndContext onDragEnd={handleDragEnd}>
                 <div className="flex gap-6 p-6 overflow-x-auto">
                     {COLUMNS.map((column) => (
@@ -112,10 +119,10 @@ const Board = () => {
                             key={column.status}
                             status={column.status}
                             title={column.title}
-                            tasks={tasks.filter((task) => task.status === column.status)}
+                            tasks={filteredTasks.filter((task) => task.status === column.status)}
                             onTaskCreated={onTaskCreated}
                             onTaskDeleted={onTaskDeleted}
-                            onEditDueDate={onEditDueDate}
+                            onTaskUpdated={onTaskUpdated}
                         />
                     ))}
                 </div>

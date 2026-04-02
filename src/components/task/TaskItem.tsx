@@ -7,7 +7,7 @@ import { parseDateOnly, isDateOverdue } from '../../lib/dateHelpers';
 type TaskProps = {
     task: Task;
     onDelete: () => void;
-    onEditDueDate?: (newDate: string) => void;
+    onEdit?: (updates: Partial<Pick<Task, 'title' | 'priority' | 'due_date'>>) => void;
 };
 
 const priorityClasses = {
@@ -22,9 +22,13 @@ const formatTaskDate = (dateString?: string) => {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
 
-const TaskItem = ({ task, onDelete, onEditDueDate }: TaskProps) => {
+const TaskItem = ({ task, onDelete, onEdit }: TaskProps) => {
     const isDone = task.status === 'done';
     const isOverdue = isDateOverdue(task.due_date);
+    const [isEditingTitle, setIsEditingTitle] = useState(false);
+    const [titleInput, setTitleInput] = useState(task.title);
+    const [isEditingPriority, setIsEditingPriority] = useState(false);
+    const [priorityInput, setPriorityInput] = useState<Task['priority']>(task.priority);
     const [isEditingDueDate, setIsEditingDueDate] = useState(false);
     const [dueDateInput, setDueDateInput] = useState(task.due_date || '');
 
@@ -32,28 +36,36 @@ const TaskItem = ({ task, onDelete, onEditDueDate }: TaskProps) => {
         id: task.id,
     });
 
+    const commitTitle = (value: string) => {
+        setIsEditingTitle(false);
+        setTitleInput(value);
+        if (value.trim().length > 0) onEdit?.({ title: value.trim() });
+    };
+
+    const commitPriority = (value: Task['priority']) => {
+        setIsEditingPriority(false);
+        setPriorityInput(value);
+        onEdit?.({ priority: value });
+    };
+
     const commitDueDate = (date: string) => {
         setIsEditingDueDate(false);
         setDueDateInput(date);
-        onEditDueDate?.(date);
+        onEdit?.({ due_date: date });
     };
 
     return (
         <div
             ref={setNodeRef}
+            {...listeners}
+            {...attributes}
             style={
                 transform
                     ? { transform: `translate(${transform.x}px, ${transform.y}px)` }
                     : undefined
             }
-            className="relative bg-white border rounded-xl p-6 shadow-sm hover:shadow-md"
+            className="relative bg-white border rounded-xl p-6 shadow-sm hover:shadow-md cursor-grab"
         >
-            <div
-                {...listeners}
-                {...attributes}
-                className="absolute top-0 left-0 right-12 bottom-12 cursor-grab"
-            />
-
             <button
                 onClick={(e) => {
                     e.preventDefault();
@@ -100,23 +112,62 @@ const TaskItem = ({ task, onDelete, onEditDueDate }: TaskProps) => {
 
             {task.priority && !isDone && (
                 <div
-                    className={`absolute top-0 left-0 w-1 h-full rounded-l-xl ${priorityClasses[task.priority]}`}
+                    className={`absolute top-1 left-0 w-1 h-[calc(100%-8px)] rounded-l-xl ${priorityClasses[priorityInput]}`}
                 />
             )}
 
             <div className="pr-8">
-                <p
-                    className={`text-lg font-semibold mb-3 ${isDone ? 'line-through text-gray-500' : 'text-gray-900'}`}
-                >
-                    {task.title}
-                </p>
+                {isEditingTitle ? (
+                    <input
+                        type="text"
+                        value={titleInput}
+                        onChange={(e) => setTitleInput(e.target.value)}
+                        onBlur={(e) => commitTitle(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitTitle(titleInput);
+                            if (e.key === 'Escape') setIsEditingTitle(false);
+                        }}
+                        className="w-full text-lg font-semibold mb-3 border rounded px-2 py-1"
+                        autoFocus
+                    />
+                ) : (
+                    <p
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditingTitle(true);
+                        }}
+                        className={`text-lg font-semibold mb-3 ${isDone ? 'line-through text-gray-500' : 'text-gray-900'} cursor-text`}
+                    >
+                        {titleInput}
+                    </p>
+                )}
 
-                <div className="flex items-center justify-between">
-                    {task.priority && (
-                        <span
-                            className={`text-xs font-medium px-2 py-1 rounded-full ${isDone ? 'bg-gray-100 text-gray-500' : priorityClasses[task.priority]}`}
+                <div className="flex items-center justify-between gap-2">
+                    {isEditingPriority ? (
+                        <select
+                            value={priorityInput}
+                            onChange={(e) => setPriorityInput(e.target.value as Task['priority'])}
+                            onBlur={(e) => commitPriority(e.target.value as Task['priority'])}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Escape') setIsEditingPriority(false);
+                            }}
+                            className="text-xs font-medium px-2 py-1 rounded-full border"
+                            autoFocus
                         >
-                            {task.priority}
+                            <option value="high">high</option>
+                            <option value="normal">normal</option>
+                            <option value="low">low</option>
+                        </select>
+                    ) : (
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setIsEditingPriority(true);
+                            }}
+                            className={`text-xs font-medium px-2 py-1 rounded-full ${isDone ? 'bg-gray-100 text-gray-500' : priorityClasses[priorityInput]} cursor-pointer`}
+                        >
+                            {priorityInput}
                         </span>
                     )}
 

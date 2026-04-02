@@ -10,7 +10,10 @@ type ColumnProps = {
     tasks: Task[];
     onTaskCreated: (task: Task) => void;
     onTaskDeleted: (taskId: string) => void;
-    onEditDueDate?: (taskId: string, dueDate: string) => void;
+    onTaskUpdated: (
+        taskId: string,
+        updates: Partial<Pick<Task, 'title' | 'priority' | 'due_date'>>,
+    ) => void;
 };
 
 const Column = ({
@@ -19,14 +22,13 @@ const Column = ({
     tasks,
     onTaskCreated,
     onTaskDeleted,
-    onEditDueDate,
+    onTaskUpdated,
 }: ColumnProps) => {
     const { setNodeRef, isOver } = useDroppable({
         id: status,
     });
     const [isAddingTask, setIsAddingTask] = useState(false);
 
-    // Sort tasks by due date (earliest first), tasks without due dates come last
     const sortedTasks = [...tasks].sort((a, b) => {
         if (!a.due_date && !b.due_date) return 0;
         if (!a.due_date) return 1;
@@ -49,9 +51,7 @@ const Column = ({
                         key={task.id}
                         task={task}
                         onDelete={() => onTaskDeleted(task.id)}
-                        onEditDueDate={
-                            onEditDueDate ? (newDate) => onEditDueDate(task.id, newDate) : undefined
-                        }
+                        onEdit={(updates) => onTaskUpdated(task.id, updates)}
                     />
                 ))}
             </div>
