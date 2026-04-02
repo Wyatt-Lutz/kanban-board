@@ -1,5 +1,5 @@
 import { supabase } from './lib/supabase';
-import type { Task, TaskStatus } from './types/task';
+import type { Task } from './types/task';
 
 
 type createTaskProps = {
