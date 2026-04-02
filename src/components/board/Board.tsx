@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import type { Task } from '../../types/task';
 import Column from './Column';
+import TopBar from '../layout/Topbar';
 import { DndContext, type DragEndEvent } from '@dnd-kit/core';
 
 const COLUMNS: { title: string; status: Task['status'] }[] = [
@@ -30,6 +31,29 @@ const Board = () => {
         if (error) {
             console.error('Error deleting task:', error);
             setTasks((prev) => [...prev, taskToDelete]);
+        }
+    };
+
+    const onEditDueDate = async (taskId: string, dueDate: string) => {
+        const previousDate = tasks.find((task) => task.id === taskId)?.due_date;
+
+        setTasks((prev) =>
+            prev.map((task) => (task.id === taskId ? { ...task, due_date: dueDate } : task)),
+        );
+
+        const { error } = await supabase
+            .from('tasks')
+            .update({ due_date: dueDate })
+            .eq('id', taskId);
+
+        if (error) {
+            console.error('Error updating due date:', error);
+
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task.id === taskId ? { ...task, due_date: previousDate } : task,
+                ),
+            );
         }
     };
 
@@ -79,20 +103,24 @@ const Board = () => {
         fetchTasks();
     }, []);
     return (
-        <DndContext onDragEnd={handleDragEnd}>
-            <div className="flex gap-6 p-6 overflow-x-auto flex-1">
-                {COLUMNS.map((column) => (
-                    <Column
-                        key={column.status}
-                        status={column.status}
-                        title={column.title}
-                        tasks={tasks.filter((task) => task.status === column.status)}
-                        onTaskCreated={onTaskCreated}
-                        onTaskDeleted={onTaskDeleted}
-                    />
-                ))}
-            </div>
-        </DndContext>
+        <>
+            <TopBar boardTitle="Kanban Board" tasks={tasks} />
+            <DndContext onDragEnd={handleDragEnd}>
+                <div className="flex gap-6 p-6 overflow-x-auto">
+                    {COLUMNS.map((column) => (
+                        <Column
+                            key={column.status}
+                            status={column.status}
+                            title={column.title}
+                            tasks={tasks.filter((task) => task.status === column.status)}
+                            onTaskCreated={onTaskCreated}
+                            onTaskDeleted={onTaskDeleted}
+                            onEditDueDate={onEditDueDate}
+                        />
+                    ))}
+                </div>
+            </DndContext>
+        </>
     );
 };
 

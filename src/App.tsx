@@ -1,5 +1,5 @@
 import AppLayout from './components/layout/AppLayout';
-import TopBar from './components/layout/Topbar';
+import Board from './components/board/Board';
 import { supabase } from './lib/supabase';
 import { useEffect, useState } from 'react';
 
@@ -20,10 +20,8 @@ function App() {
         return null;
     }
     return (
-        <AppLayout
-            topBar={<TopBar boardTitle="Test" totalTasks={142} doneTasks={2} overdueTasks={4} />}
-        >
-            <div>Hi</div>
+        <AppLayout>
+            <Board />
         </AppLayout>
     );
 }

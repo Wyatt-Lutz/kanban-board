@@ -7,7 +7,7 @@ type AppLayoutProps = {
     children: ReactNode; //board content
 };
 
-const AppLayout = ({ topBar, children }: AppLayoutProps) => {
+const AppLayout = ({ topBar }: AppLayoutProps) => {
     return (
         <div>
             <header>{topBar}</header>

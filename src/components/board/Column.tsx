@@ -10,27 +10,52 @@ type ColumnProps = {
     tasks: Task[];
     onTaskCreated: (task: Task) => void;
     onTaskDeleted: (taskId: string) => void;
+    onEditDueDate?: (taskId: string, dueDate: string) => void;
 };
 
-const Column = ({ status, title, tasks, onTaskCreated, onTaskDeleted }: ColumnProps) => {
+const Column = ({
+    status,
+    title,
+    tasks,
+    onTaskCreated,
+    onTaskDeleted,
+    onEditDueDate,
+}: ColumnProps) => {
     const { setNodeRef, isOver } = useDroppable({
         id: status,
     });
     const [isAddingTask, setIsAddingTask] = useState(false);
 
+    // Sort tasks by due date (earliest first), tasks without due dates come last
+    const sortedTasks = [...tasks].sort((a, b) => {
+        if (!a.due_date && !b.due_date) return 0;
+        if (!a.due_date) return 1;
+        if (!b.due_date) return -1;
+        return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+    });
     return (
         <div
             ref={setNodeRef}
-            className={`min-h-96 flex flex-col gap-2 p-4 rounded-md w-80 ${isOver ? 'bg-gray-100' : ''}`}
+            className={`flex flex-col p-4 rounded-md w-80 ${isOver ? 'bg-gray-100' : ''}`}
         >
-            {tasks.length === 0 && <div className="text-xs text-gray-400 text-center py-8"></div>}
-            <div>{title}</div>
-            <div>{tasks.length}</div>
-            <div className="flex flex-col gap-3">
-                {tasks.map((task) => (
-                    <TaskItem key={task.id} task={task} onDelete={() => onTaskDeleted(task.id)} />
+            <div className="flex pb-1 justify-between">
+                <div className="text-lg font-semibold">{title}</div>
+                <div className="text-xs text-gray-500">{tasks.length} tasks</div>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-2">
+                {sortedTasks.map((task) => (
+                    <TaskItem
+                        key={task.id}
+                        task={task}
+                        onDelete={() => onTaskDeleted(task.id)}
+                        onEditDueDate={
+                            onEditDueDate ? (newDate) => onEditDueDate(task.id, newDate) : undefined
+                        }
+                    />
                 ))}
             </div>
+
             {isAddingTask ? (
                 <NewTaskItem
                     status={status}
@@ -42,7 +67,7 @@ const Column = ({ status, title, tasks, onTaskCreated, onTaskDeleted }: ColumnPr
                 />
             ) : (
                 <button
-                    className="border rounded-lg py-2 border-dashed"
+                    className="border rounded-lg py-2 px-4 border-dashed hover:bg-gray-50 transition-colors w-full mt-3"
                     onClick={() => setIsAddingTask(true)}
                 >
                     + Add task
